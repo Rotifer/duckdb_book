@@ -1,7 +1,13 @@
 # Chapter 3 - Loading data into DuckDB
 
+Now that we have created our source files, we need to upload them into a DuckDB database. In this chapter we will cover the DuckDB commandline client, the types of commands you can issue from it and perform an actual file import. Some topics such as schemas, dot commands and SQL statements are touched on but not discussed in detail but be assured that we will return to all of these topics in later chapters. The main objective now is just to get data into our DuckDB database. Once we have achieved this, we will be able to clean up and re-format the data as required in the following chapter. The exercises at the end of the chapter will give you more practice so please do try to complete them and only look at the answers if you get truly stuck.
+
 ## Before we start
 
+I am assuming the following:
+
+- You have installed DuckDB - to verify execute `which duckdb` from the unix terminal. If you get nothing back, then DuckDB is not installed or is not in your executables path.
+- You have checked out the code from the GitHub repo
 
 
 ## Getting started
@@ -66,7 +72,7 @@ We are now going to create a table in the staging schema for the entire contents
 CREATE TABLE seasons_1993_2023_raw AS SELECT * FROM  '../output_data/seasons_1993_2023.tsv';
 ```
 
-Like many command commandline tools, when you execute a command, "no news is good news!". If all went well, you simply get back an empty prompt. We can verify that the table has loaded by doing a data row count as follows:
+Like many command commandline tools, when you execute a command, "no news is good news!". If all went well, you simply get back an empty prompt. That wasn't very difficult, in fact, DuckDB makes this kind of task trivial. We were able to create a table by simply selecting everything ( _SELECT * _) from an external text file. DuckDB does allow more fine-grained control over data imports using functions such as _read_csv_ that take options which we can explicitly set and we will cover such functions and their options in later chapters. We can verify that the table has loaded by doing a data row count as follows:
 
 ```sql
 SELECT COUNT(*) loaded_row_count FROM seasons_1993_2023_raw;
