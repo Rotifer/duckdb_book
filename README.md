@@ -1,2 +1,3 @@
-# duckdb_book
-Code for DuckDB book
+# DuckDB Learning
+
+Notes and code for learning DuckDB
