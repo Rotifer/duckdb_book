@@ -11,8 +11,8 @@ fi
 for FILE in ${INPUT_DIR}{1993..2019}*.csv
 do
   sed '1d' $FILE | \
-    awk -v f=$(basename $FILE | sed 's/.csv//') \
-      'BEGIN{FS=","; OFS="\t"}{print f,$2,"\t",$3,$4,$5,$6}' \
+    awk -v f=$(basename $FILE | sed 's/.csv//') -v null='NA' \
+      'BEGIN{FS=","; OFS="\t"}{print f,$2,null,$3,$4,$5,$6}' \
          >>seasons_1993_2019.tsv
 done
 
