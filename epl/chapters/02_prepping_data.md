@@ -2,7 +2,9 @@
 
 One of the least appreciated and least enjoyable tasks is preparing the data files for upload into your database. The data we need is often scattered across multiple source files and the formats of those files may be incompatible. Our objective here is to collect all the data for English Premier League (EPL) football (aka soccer in some varieties of English) games from the first season, 1992-1993 to the season 2023-2024. I already gave some background on football in general and the EPL in particular in the introduction so I am assuming you know what I am talking about when I say "EPL" and "seasons".
 
-This chapter uses some reasonably advanced shell scripting. Anyone who knows basic programming and has at least some shell programming experience should be able to follow along. If you aren't interested in this topic, you can skip ahead to the next chapter and load the files which have already been generated to DuckDB and are available in the repo in the directory _output_data_ and you will then be able to progress with the SQL. Also, if you are proficient in say Ruby or Python and prefer those tools to shell, by all means go ahead and use them instaed of shell if you prefer. To repeat what I said in the introduction, I like and value shell programming but many do not. 
+This chapter uses some reasonably advanced shell scripting. Anyone who knows basic programming and has at least some shell programming experience should be able to follow along. I use the bash shell in all my examples; it is a commonly used shell and is standard on Linux. There is a range of shells to choose from, the modern Mac uses zsh (Z shell) by default but if you use the bash shebang line, your script will be executed by bash. In addition to the variety of shells, another drawback of shell scripting is that the utilities that the shell uses might differ; for example, _grep_ onThat said, a few tweak or a Google search can usually fix things.
+
+If you aren't interested in this topic, you can skip ahead to the next chapter and load the files which have already been generated to DuckDB and are available in the repo in the directory _output_data_ and you will then be able to progress with the SQL. Also, if you are proficient in say Ruby or Python and prefer those tools to shell, by all means go ahead and use them instaed of shell if you prefer. To repeat what I said in the introduction, I like and value shell programming but many do not. 
 
 ## Before we start
 
@@ -33,9 +35,57 @@ I then downloaded the sheet as a tab-delimited CSV file using the menu action:
 
 `File->Download->Tab-separated values (.tsv)`
 
-I saved the file as _season_1992_1993.tsv_ in the repo directory _source_data_
+I saved the file as _season_1992_1993.tsv_ in the repo directory _source_data_. 
+
+When working with real world data, it is valuable to have skills in a wide range of tools. Google Sheets is an excellent application with lots of really useful functions such as _IMPORTHTML_ which we have used above. It is also compatible with Excel and it plays nicely with DuckDB which is a topic we will discuss later in the book. Spreadsheets are ubiquitous in the data world and though often looked down upon, they have their uses and should not be overlooked.
+
+The file is in what is often described as a "crosstab" format which is not convenient for querying. In order to  extract the data from it, we will need to do some manipualtion to create a "long" format with each club name and home and away scores in separate columns. We are also missing the match date so when we integrate data for this season with the later seasons from the previous step, we will have missing data. Missing data is a common occurrence in the real world and we will discuss how to deal with it when we have the data in DuckDB tables that we will query with SQL.
 
 
 ## Builing our shell script piece by piece
 
-The final shell script
+The final shell script is available in the _shell_scripts_ directory of the project repo and is named _parse_seasons_1993_2023.sh_. You can take a look at it now to get an overview of it but I am going to break it down piece by piece and explain what each segment of it achieves so that by the end, you will hopefully have a good understanding of its workings. Shell scripting is very amenable to this building piece by peice because it is really a glue for the wide range of programs and utilities available on modern Unix-type systems. If you use Unix utilities, then you can write shell scripts by just putting the commands in a script file that you then make executable. Our script file starts with the _shebang_ line: `#!/usr/bin/bash`. When we execute the script by entering `./parse_seasons_1993_2023.sh` , in the command line, it starts executing the lines in the file either line by line or by construct when you have compound statements such as loops and _if_ statements.
+
+Each section of the script is delineated by an explanatory comment that begins with # and extends to the line end. Shell scripts can become cryptic so copious comments can help clarify the intent of the code.
+
+### Declare some variables
+
+The script does not take any arguments when it is run; everything it needs to know is contained within the script itself. The input and out directory paths are assigned to variables as relative paths (relative to the directory of the script itself).
+
+```sh
+# Declare variables.
+OUTPUT_DIR="../output_data/"
+INPUT_DIR="../source_data/"
+```
+
+Using variable in place of hard-coded values allows us to change either path in one just place; this is good practice. Note also that the double quotes are required and you cannot have any spaces around the assignment = sign; this is a shell script oddity and frequent source of potentially nasty code bugs.
+
+### Delete the output file
+
+If the output file was generated previously, we want to delete it and start fresh. The following shell construct checks if the file exists, if it does, it deletes it. The relevant bash construct is as follows:
+
+```sh
+# Remove the final output file if it already exists.
+if [[ -f ${OUTPUT_DIR}seasons_1993_2023.tsv ]]; then
+  rm ${OUTPUT_DIR}seasons_1993_2023.tsv 
+fi
+```
+
+The bash _if_ syntax looks strange with its double square brackets but the _-f_ is a simple file test and returns _true_ if the given file exists. The dollar is required when accessing the value assigned to a shell variable. The braces ({}) are included to delimit the shell variable. Without the braces, the shell would erroneously assume the variable name includes the text "seasons_1993_2023.tsv"; if you  are accessing the value of a variable name that is bounded by white space, then the curly braces are not needed. Forgetting to use the dollar sign when accessing the variable's value and omitting the curly braces when they are need are two frequent sources of shell script bugs!
+
+ The body of the _if_ statement contains a single command to remove ( _rm_ ) the file. We could simply issue the _rm_ command without enclosing it in the _if_ construct but an error would be written to the terminal as standard error if the file did not exist so wrapping it in an _if_ is slightly cleaner.
+
+### Parse files that do not have the match time column
+
+I am going to discuss this code segment in detail because it is relatively complex and it demostrates the real power of shell scripting. It also uses the powerful _sed_ and _awk_ utilities which are two trusty old power tools of Unix scripting.
+
+```sh
+# Parse the files which *do not have* the match time column.
+for FILE in ${INPUT_DIR}{1993..2019}*.csv
+do
+  sed '1d' $FILE | \
+    awk -v f=$(basename $FILE | sed 's/.csv//') -v null='NA' \
+      'BEGIN{FS=","; OFS="\t"}{print f,$2,null,$3,$4,$5,$6}' \
+         >>seasons_1993_2019.tsv
+done
+```
