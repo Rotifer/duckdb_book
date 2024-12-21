@@ -1,10 +1,15 @@
 # Chapter 2 - Getting and Prepping the data for loading
 
-One of the least appreciated and least enjoyable tasks is preparing the data files for upload into your database. The data we need is often scattered across multiple source files and the formats of those files may be incompatible. Our objective here is to collect all the data for English Premier League (EPL) football (aka soccer in some varieties of English) games from the first season, 1992-1993 to the season 2023-2024. I already gave some background on football in general and the EPL in particular in the introduction so I am assuming you know what I am talking about when I say "EPL" and "seasons".
+One of the least appreciated and least enjoyable tasks for data analysis is preparing the data files for upload into your database. The data we need is often scattered across multiple source files and the formats of those files may be incompatible. Our objective here is to collect all the data for English Premier League (EPL) football (aka soccer in some varieties of English) games from the inaugural 1992-1993 EPL season to the season 2023-2024. I already gave some background on football in general and the EPL in particular in the introduction so I am assuming you know what I am talking about when I say things like "EPL" and "seasons".
 
-This chapter uses some reasonably advanced shell scripting. Anyone who knows basic programming and has at least some shell programming experience should be able to follow along. I use the bash shell in all my examples; it is a commonly used shell and is standard on Linux. There is a range of shells to choose from, the modern Mac uses zsh (Z shell) by default but if you use the bash shebang line, your script will be executed by bash. In addition to the variety of shells, another drawback of shell scripting is that the utilities that the shell uses might differ; for example, _grep_ onThat said, a few tweak or a Google search can usually fix things.
+This chapter uses some reasonably advanced shell scripting. Anyone who knows basic programming and has at least some shell programming experience should be able to follow along. I use the bash shell in all my examples; it is a commonly used shell and is standard on Linux. There is a range of shells to choose from, the modern Mac uses zsh (Z shell) by default but if you use the bash shebang line, your script will be executed by bash. In addition to the variety of shells, another complication of shell scripting is that the utilities that the shell uses might differ; for example, the text match and filter utility _grep_ on one platform might be implemented as _egrep_ on another platform. That said, a few tweak or a Google search can usually fix things.
 
-If you aren't interested in this topic, you can skip ahead to the next chapter and load the files which have already been generated to DuckDB and are available in the repo in the directory _output_data_ and you will then be able to progress with the SQL. Also, if you are proficient in say Ruby or Python and prefer those tools to shell, by all means go ahead and use them instaed of shell if you prefer. To repeat what I said in the introduction, I like and value shell programming but many do not. 
+If you aren't interested in this topic, you can skip ahead to the next chapter and load the files which have already been generated to DuckDB and are available in the repo in the directory _output_data_ and you will then be able to progress with the SQL. Also, if you are proficient in say Ruby or Python and prefer those tools to shell, by all means go ahead and use them instead of shell if you prefer. To repeat what I said in the introduction, I like and value shell programming but opinions differ.
+
+## Task overview
+
+I have downloaded 31 files covering the EPL season 1993-1994 to 20123-24. These are comma-separated values (CSV) files and we want to extract only a subset of columns from each file and then concatenate all 21 files together into a tab-separated file that we will load into a DuckDB database. As the source files were built over the seasons, new columns have been added over time. Most new columns have been added to the right and we are ignoring them. More recent season files have an additional column that records the match start time which has been inserted between columns we need to retain so we will need to account for it in our parsing code. I have a different file format entirely for the inaugural 1992-1993 season that we will process in the DuckDB database itself and then add to the final table in the database.
+
 
 ## Before we start
 
@@ -44,13 +49,13 @@ The file is in what is often described as a "crosstab" format which is not conve
 
 ## Builing our shell script piece by piece
 
-The final shell script is available in the _shell_scripts_ directory of the project repo and is named _parse_seasons_1993_2023.sh_. You can take a look at it now to get an overview of it but I am going to break it down piece by piece and explain what each segment of it achieves so that by the end, you will hopefully have a good understanding of its workings. Shell scripting is very amenable to this building piece by peice because it is really a glue for the wide range of programs and utilities available on modern Unix-type systems. If you use Unix utilities, then you can write shell scripts by just putting the commands in a script file that you then make executable. Our script file starts with the _shebang_ line: `#!/usr/bin/bash`. When we execute the script by entering `./parse_seasons_1993_2023.sh` , in the command line, it starts executing the lines in the file either line by line or by construct when you have compound statements such as loops and _if_ statements.
+The final shell script is available in the _shell_scripts_ directory of the project repo and is named _parse_seasons_1993_2023.sh_. You can take a look at it now to get an overview of it but I am going to break it down piece by piece and explain what each segment of it achieves so that by the end, you will hopefully have a good understanding of its workings. Shell scripting is very amenable to this building piece by piece approach because it is really a glue for the wide range of programs and utilities available on modern Unix-type systems. If you use Unix utilities, then you can write shell scripts by just putting the commands in a script file that you then make executable. Our script file starts with the _shebang_ line: `#!/usr/bin/bash`. When we execute the script by entering `./parse_seasons_1993_2023.sh`, in the command line, it starts executing the lines in the file either line by line or by construct when you have compound statements such as loops and _if_ statements.
 
 Each section of the script is delineated by an explanatory comment that begins with # and extends to the line end. Shell scripts can become cryptic so copious comments can help clarify the intent of the code.
 
 ### Declare some variables
 
-The script does not take any arguments when it is run; everything it needs to know is contained within the script itself. The input and out directory paths are assigned to variables as relative paths (relative to the directory of the script itself).
+The script does not take any arguments when it is run; everything it needs to know is contained within the script itself. The input and out directory paths are assigned to variables as relative paths, relative to the directory of the script itself, that is.
 
 ```sh
 # Declare variables.
@@ -77,7 +82,7 @@ The bash _if_ syntax looks strange with its double square brackets but the _-f_ 
 
 ### Parse files that do not have the match time column
 
-I am going to discuss this code segment in detail because it is relatively complex and it demostrates the real power of shell scripting. It also uses the powerful _sed_ and _awk_ utilities which are two trusty old power tools of Unix scripting.
+I am going to discuss this code segment in detail because it is relatively complex and it demostrates the real power of shell scripting. It also uses the powerful _sed_ and _awk_ utilities which are two trusty old power tools of Unix scripting. I have broken up the commands using the shell line continuation backslash character to make the lines shorter and hopefully more readable.
 
 ```sh
 # Parse the files which *do not have* the match time column.
@@ -89,3 +94,64 @@ do
          >>seasons_1993_2019.tsv
 done
 ```
+
+I already mentioned the importance of consistent naming of files to make file processing easier. In the _for_ loop above we are using _brace expansion_ to identify all CSV files beginning with the number 1993 up to and including 2019. Each iteration of the loop assigns the relative file path to the variable _FILE_. The `sed '1d' $FILE` command deletes the first line from the file (the column names row) and sends all remaining lines to the _awk_ command using the pipe symbol (|). In shell scripting parlance, we say a command pipes its output to another command. The _awk_ part is the most complex so let's break it down:
+
+- `-v f=$(basename $FILE | sed 's/.csv//')`: This creates an _awk_ variable called _f_ which we want to include in the output file. For each file processed in the loop, _f_ is assigned a new value representing the season years separated by an underscore. It does this by removing the directory ( _basename_ ), _basename) pipes its output to _sed_ which removes the file extension. The _sed_ output is assigned to the _awk_ variable _f_.
+
+- `-v null='NA'`: This creates an additional _awk_ variable which is assigned the string value "NA" which will also be inserted into the final output to represent the missing match start time for these files.
+
+- `'BEGIN{FS=","; OFS="\t"}{print f,$2,null,$3,$4,$5,$6}'`: This is the _awk_ code to create the final output lines. The _BEGIN{}_ block sets two special _awk_ variables: _FS_ sets the column separator for the input files to comma (,) and _OFS_ sets the output column separator to tab (\t). Line processing for output takes place in the print block. The $numbers correspond to the input file columns, $2 is the second column. Five column values are extracted from each input file and two additional columns are inserted using the awk variables _f_ for season and _null_ for the missing match start time column. We end up with seven tab-separated columns in the output file.
+
+- `>>seasons_1993_2019.tsv`: The _awk_ output is re-directed to a file. We need to use the _>>_ instead of the _>_ syntax to _append_ to the output file. If we used _>_ each iteration of the loop would overwrite the file created in the previous iteration.
+
+
+### Parse files that have the match time column
+
+```sh
+# Parse the files which *have* the match time column.
+for FILE in ${INPUT_DIR}{2020..2023}*.csv
+do
+  sed '1d' $FILE | \
+    awk -v f=$(basename $FILE | sed 's/.csv//') \
+      'BEGIN{FS=","; OFS="\t"}{print f,$2,$3,$4,$5,$6,$7}' \
+         >>seasons_2020_2024.tsv
+done
+```
+
+The logic is identical to that described for the previous _for_ loop except for this time we are only inserting the _awk_  _f_ variable value for one column to record the season. The match start time is in the third column ($3) of each input file.
+
+### Create the final file with the column names row
+
+```sh
+# Write the column names header row to the final output file.
+echo "season,match_date,match_time,home_club_name,\
+        away_club_name,home_club_goals,away_club_goals" | \
+     awk 'BEGIN{FS="," ; OFS="\t"}{print $1,$2,$3,$4,$5,$6,$7}' \
+       >seasons_1993_2023.tsv
+```
+
+The _echo_ command pipes a string of seven comma-separated column names to _awk_ which then converts them to tabs and writes them our final output file. We use only a single _>_ this time because we want to create a new file. This file now has just a single line: the column names row.
+
+### Append the data from the two files created in the _for_ loops
+
+```sh
+# Append the two files generated above to the output file.
+cat seasons_1993_2019.tsv seasons_2020_2024.tsv \
+      >>seasons_1993_2023.tsv
+```
+
+The _cat_ command appends (_>>_)the rows from the two files created in the _for_ loops to the final file. 
+
+### Clean-up
+
+```sh
+# Clean up by moving the main output file and by removing the temporary files.
+mv seasons_1993_2023.tsv ${OUTPUT_DIR}
+rm seasons_1993_2019.tsv
+rm seasons_2020_2024.tsv
+echo "Script finished, see file '${OUTPUT_DIR}seasons_1993_2023.tsv'"
+```
+
+Our script has created three files in the same directory as the script itself. We only want one of these files, _seasons_1993_2023.tsv_, but we should not keep it in the script directory so we move it (_mv_). The other two files are no longer needed so we can remove them (_rm_). Our task is now complete so we can print a message to that effect (_echo_).
+
