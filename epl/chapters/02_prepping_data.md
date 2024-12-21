@@ -173,7 +173,7 @@ We will see more bash scripts throughout the book for moving data into and out o
 
 Some of the exercises here may require use of techniques and commands that haven't been discussed in the chapter. The solutions I provide for the exercises below use the _tr_, _sort_, _cut_ and _uniq_ commands so you may want to read up on them. They are not difficult and are very useful. 
 
-1. When presented with unfamiliar text files, the first thing I usually do is extract the column names row and write out each column name with its ordinal position in the file. Try this by writing a shell pipeline to extract the column names row (first line) from the season input files _1993_1994.csv_ and _2023_2024.csv_ (in repo directory _source_files) so that the output is as follows:
+1. When presented with unfamiliar text files, the first thing I usually do is extract the column names row and write out each column name with its ordinal position in the file. Try this by writing a shell pipeline to extract the column names row (first line) from the season input files _1993_1994.csv_ and _2023_2024.csv_ (in repo directory _source_files) so that the output is as shown below for the first eight columns of a test file:
 
 ![Chapter 2 - figure 1](images/ch02_fig1.png)
 
@@ -181,7 +181,7 @@ That shows the first few column names of an input file each on their own line an
 
 2. Aggregating together different columnar files only works if each input file has the same number of columns with the same kind of data (same data type and data semantics). How could you verify this for the final output file _seasons_1993_2023.csv_ located in the _output_data_ directory using shell code? You could do this in a variety of ways but my solution uses _awk_.
 
-3.Using the output file _seasons_1993_2023.csv_ located in the _output_data_ directory, create a list of sorted seasons (stored in the first column) in sorted order but that _exclude) the column name.
+3.Using the output file _seasons_1993_2023.csv_ located in the _output_data_ directory, create a list of sorted seasons (stored in the first column) in sorted order but that _excludes_ the column name.
 
 4. __Challenge__: Write an executable Bash script that generalises the solution for the previous exercise such that the shell script takes two variables: a file name and a column number
  and writes out a sorted list of unique values for that column in the given file but excludes the column name in row 1. 
