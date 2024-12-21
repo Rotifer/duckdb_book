@@ -155,3 +155,33 @@ echo "Script finished, see file '${OUTPUT_DIR}seasons_1993_2023.tsv'"
 
 Our script has created three files in the same directory as the script itself. We only want one of these files, _seasons_1993_2023.tsv_, but we should not keep it in the script directory so we move it (_mv_). The other two files are no longer needed so we can remove them (_rm_). Our task is now complete so we can print a message to that effect (_echo_).
 
+## General comment on shell scripting and its value
+
+We will see more bash scripts throughout the book for moving data into and out of DuckDB databases but none of the code will be any more complicated than what we have covered here. The real power of shell scripting generally derives from the utilities that come as standard with Unix-type platforms and others which can be installed. We can use shell scripts to call these utilities and pipe their output into other tools. These _pipelines_ can be very powerful by allowing us to chain together various tools to achieve quite complex tasks. We have used _sed_ and _awk_ here but there are many other tools available. I frequently use _curl_ in shell scripts, for example, to automate file downloads. The _duckdb_ application itself can also be used in shell pipelines as we will see in later examples.
+
+## Main points
+
+- We used the _Bash_ shell to build our final DuckDB upload file.
+- __Brace expansion__ using the numbers in filenames is very useful for creating a list of files to process in a _for_ loop.
+- The ___sed___ command is very useful for deleting lines from input files and for doing text substitutions.
+- The ___awk___ command is well suited to column extraction and creation of variables whose values can be inserted into output files.
+- The output of one command can become the input of another command by using the __pipe__ symbol (|).
+- Multiple commands can be chained together using pipes to build __pipelines__.
+- Unix-type systems provide a wide range of programs for a variety of task and these tools can be used together in shell scripts.
+
+## Exercises
+
+Some of the exercises here may require use of techniques and commands that haven't been discussed in the chapter. The solutions I provide for the exercises below use the _tr_, _sort_, _cut_ and _uniq_ commands so you may want to read up on them. They are not difficult and are very useful. 
+
+1. When presented with unfamiliar text files, the first thing I usually do is extract the column names row and write out each column name with its ordinal position in the file. Try this by writing a shell pipeline to extract the column names row (first line) from the season input files _1993_1994.csv_ and _2023_2024.csv_ (in repo directory _source_files) so that the output is as follows:
+
+![Chapter 2 - figure 1](images/ch02_fig1.png)
+
+That shows the first few column names of an input file each on their own line and numbered.
+
+2. Aggregating together different columnar files only works if each input file has the same number of columns with the same kind of data (same data type and data semantics). How could you verify this for the final output file _seasons_1993_2023.csv_ located in the _output_data_ directory using shell code? You could do this in a variety of ways but my solution uses _awk_.
+
+3.Using the output file _seasons_1993_2023.csv_ located in the _output_data_ directory, create a list of sorted seasons (stored in the first column) in sorted order but that _exclude) the column name.
+
+4. __Challenge__: Write an executable Bash script that generalises the solution for the previous exercise such that the shell script takes two variables: a file name and a column number
+ and writes out a sorted list of unique values for that column in the given file but excludes the column name in row 1. 
