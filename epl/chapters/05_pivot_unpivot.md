@@ -56,7 +56,13 @@ INTO
 
 Notes on the above
 
-### Beaking the scores into home and awy columns
+### Beaking the scores into home and away columns
+
+```sql
+SELECT
+FROM season_1992_1993_unpivot
+WHERE LENGTH(score) = 1;
+```
 
 ```sql
 CREATE OR REPLACE TABLE season_1992_1993_scores AS
@@ -69,6 +75,8 @@ FROM season_1992_1993_unpivot;
 ```
 
 ### Remove self v self rows
+
+The DELETE relies on the fact that rows where the home and away club is the same the second element returned by the _STRING_SPLIT_ function will be _NULL_.
 
 Check the count before the delete:
 
@@ -97,7 +105,34 @@ AS
 SELECT
   home_club_name,
   away_club_code,
-  CAST(home_club_score AS TINYINT),
-  CAST(away_club_score AS TINYINT)
+  CAST(home_club_score AS TINYINT) home_club_score,
+  CAST(away_club_score AS TINYINT) away_club_score
 FROM season_1992_1993_scores;
 ```
+
+### Create the club name to club code lookup
+
+```sql
+CREATE OR REPLACE TABLE club_name_code_lu AS
+SELECT 
+  "Home \ Away" club_name,
+  away_club_code club_code
+FROM season_1992_1993_unpivot 
+WHERE LENGTH(score) = 1;
+```
+
+### Jon tables to convert club name to club code
+
+```sql
+CREATE OR REPLACE TABLE season_1992_1993_ready AS
+SELECT
+  lu.club_code home_club_code,
+  scores.away_club_code,
+  scores.home_club_score,
+  scores.away_club_score
+FROM season_1992_1993_int_scores scores
+  INNER JOIN club_name_code_lu lu
+    ON scores.home_club_name = lu.club_name;
+```
+
+This table is now ready to be integrated with the data for the other seasons. We are missing the information on match date and time but we have successfully transformed our input crosstab fortmat into a much more usable form. I will make this point repeatedly: DuckDB really excels at this sort of task where we need to reshape data and pull strings apart. It is a tool par excellence for general data wrangling and data munging.
