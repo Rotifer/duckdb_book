@@ -2,9 +2,9 @@
 
 Finding the data we need, checking it, cleaning it and preparing it for database upload can be thankless, onerous and tedious. The data we need is often scattered across multiple source files and the formats of those files may be incompatible. Frequently data is missing or unusable. All these factors combine to make data management and data analysis much more challenging than is often appreciated.
 
-Our objective in this chapter is to collect all the data for English Premier League (EPL) football (aka soccer in some varieties of English) games from the inaugural 1992-1993 EPL seasonthe files  to the season 2023-2024. I already gave some background on football in general and the EPL in particular in the introduction so I am assuming you know what I am talking about when I say things like "EPL" and "seasons".
+Our objective in this chapter is to collect all the data for English Premier League (EPL) football (aka soccer in some varieties of English) games from the inaugural 1992-1993 EPL season to the season 2023-2024. I already gave some background on football in general and the EPL in particular in the introduction so I am assuming you know what I am talking about when I say things like "EPL" and "seasons".
 
-This chapter uses some reasonably advanced shell scripting. Anyone who knows basic programming and has at least some shell programming experience should be able to follow along. I use the bash shell in all my examples; it is a commonly used shell and is standard on Linux. There is a range of shells to choose from, the modern Mac uses zsh (Z shell) by default but if you use the bash shebang line, your script will be executed by bash. In addition to the variety of shells, another complication of shell scripting is that the utilities that the shell uses might differ; for example, the text match and filter utility _grep_ on one platform might be implemented as _egrep_ on another platform. That said, a few tweak or a Google search can usually fix things.
+This chapter uses some reasonably advanced shell scripting. Anyone who knows basic programming and has at least some shell programming experience should be able to follow along. I use the bash shell in all my examples; it is a commonly used shell and is standard on Linux. There is a range of shells to choose from, the modern Mac uses zsh (Z shell) by default but if you use the bash shebang line, your script will be executed by bash. In addition to the variety of shells, another complication of shell scripting is that the utilities that the shell uses might differ; for example, the text match and filter utility _grep_ on one platform might be implemented as _egrep_ on another platform. That said, a few tweaks or a Google search can usually fix things.
 
 If you aren not interested in this topic and just want to get to the DuckDB stuff, then you can skip ahead to the next chapter. The DuckDB load files have already been generated and are available in the repo directory _output_data_. Also, if you are proficient in say Ruby or Python and prefer those tools to shell, by all means go ahead and use them instead of shell if you prefer. Windows users who are familiar with PowerShell might also prefer that tool instead. To repeat what I said in the introduction, I like and value shell programming but opinions differ. 
 
@@ -30,7 +30,7 @@ Tip: Consistent file naming really helps to keep things organised and also makes
 
 31 such files were downloaded, renamed and stored in the repo directory named _source_files_.
 
-### Season 199-1993
+### Season 1992-1993
 
 Unfortunately, data for the very first EPL season was not avaialble on the website I refer to above. It seemed a shame to me not to have data for the very first EPL season so I found it on Wikipedia, [1992–93 FA Premier League](https://en.wikipedia.org/wiki/1992%E2%80%9393_FA_Premier_League).
 
@@ -46,7 +46,7 @@ I then downloaded the sheet as a tab-delimited CSV file using the menu action:
 
 I saved the file as _season_1992_1993.tsv_ in the repo directory _source_data_. 
 
-When working with real world data, it is valuable to have skills in a wide range of tools. Google Sheets is an excellent application with lots of really useful functions such as _IMPORTHTML_ which we have used above. It is also compatible with Excel and it plays nicely with DuckDB which is a topic we will discuss later in the book.
+When working with real world data, it is valuable to have skills in a wide range of tools. Google Sheets is an excellent application with lots of really useful functions such as _IMPORTHTML_ which we have used above. It is also compatible with Excel and it plays nicely with DuckDB.
 
 The downloaded file is in what is often described as a "crosstab" format which is not convenient for querying. In order to  extract the data from it, we will need to do some manipulation to create a "long" format with each club name and home and away scores in separate columns. We are also missing the match date so when we integrate data for this season with the later seasons from the previous step, we will have missing data. Missing data is a common occurrence in the real world and we will discuss how to deal with it when we have the data in DuckDB tables.
 
@@ -91,24 +91,24 @@ Let's take a close look at this code segment because it is relatively complex an
 
 ```sh
 # Parse the files which *do not have* the match time column.
-for FILE in ${INPUT_DIR}{1993..2019}*.csv
+for FILE in ${INPUT_DIR}{1993..2018}*.csv
 do
   sed '1d' $FILE | \
-    awk -v f=$(basename $FILE | sed 's/.csv//') -v null='NA' \
-      'BEGIN{FS=","; OFS="\t"}{print f,$2,null,$3,$4,$5,$6}' \
+    awk -v season=$(basename $FILE | sed 's/.csv//') -v null='NA' \
+      'BEGIN{FS=","; OFS="\t"}{print season,$2,null,$3,$4,$5,$6}' \
          >>seasons_1993_2019.tsv
 done
 ```
 
-We already discussed the importance of consistent naming of files to make file processing easier and here we see an example of it. In the _for_ loop above we are using _brace expansion_ to create a list of all CSV files beginning with the numbers in the range 1993 up to and including 2019. Each iteration of the loop assigns the relative file path to the variable _FILE_. The `sed '1d' $FILE` command deletes the first line from the file (the column names row) and sends all remaining lines to the _awk_ command using the pipe symbol (|). In shell scripting parlance, we say a command _pipes_ its output to another command. 
+We already discussed the importance of consistent naming of files to make file processing easier and here we see an example of it. In the _for_ loop above we are using _brace expansion_ to create a list of all CSV files beginning with the numbers in the range 1993 up to and including 2018. Each iteration of the loop assigns the relative file path to the variable _FILE_. The `sed '1d' $FILE` command deletes the first line from the file (the column names row) and sends all remaining lines to the _awk_ command using the pipe symbol (|). In shell scripting parlance, we say a command _pipes_ its output to another command. 
 
 The _awk_ code is the most complex so let's break it down:
 
-- `-v f=$(basename $FILE | sed 's/.csv//')`: This creates an _awk_ variable called _f_ which we want to include in the output file. For each file processed in the loop, _f_ is assigned a new value representing the season years separated by an underscore. It does this by removing the directory ( _basename_ ), _basename) pipes its output to _sed_ which removes the file extension. The _sed_ output is assigned to the _awk_ variable _f_.
+- `-v season=$(basename $FILE | sed 's/.csv//')`: This creates an _awk_ variable called _season_ which we want to include in the output file. For each file processed in the loop, _season_ is assigned a new value representing the season years separated by an underscore. It does this by removing the directory ( _basename_ ), _basename_ pipes its output to _sed_ which removes the file extension. The _sed_ output is assigned to the _awk_ variable _season_.
 
 - `-v null='NA'`: This creates an additional _awk_ variable we assign to the string value "NA" and is inserted into the final output to represent the missing match start time for these files.
 
-- `'BEGIN{FS=","; OFS="\t"}{print f,$2,null,$3,$4,$5,$6}'`: Here is the _awk_ code to create the final output lines. The _BEGIN{}_ block sets two special _awk_ variables: _FS_ sets the column separator for the input files to comma (,) and _OFS_ sets the output column separator to tab (\t). Line processing for output takes place in the print block. The dollar followed by a numbers value correspond to the input file columns, $2 is the second column, for example. Five column values are extracted from each input file and two additional columns are inserted using the _awk_ variables _f_ for season and _null_ for the missing match start time column. We end up with seven tab-separated columns in the output file.
+- `'BEGIN{FS=","; OFS="\t"}{print f,$2,null,$3,$4,$5,$6}'`: Here is the _awk_ code to create the final output lines. The _BEGIN{}_ block sets two special _awk_ variables: _FS_ sets the column separator for the input files to comma (,) and _OFS_ sets the output column separator to tab (\t). Line processing for output takes place in the print block. The dollar followed by a numbers value correspond to the input file columns, $2 is the second column, for example. Five column values are extracted from each input file and two additional columns are inserted using the _awk_ variables _season_ for season and _null_ for the missing match start time column. We end up with seven tab-separated columns in the output file.
 
 - `>>seasons_1993_2019.tsv`: The _awk_ output is re-directed to a file. We need to use the _>>_ instead of the _>_ syntax to _append_ to the output file. If we used _>_ each iteration of the loop would overwrite the file created in the previous iteration.
 
@@ -117,16 +117,16 @@ The _awk_ code is the most complex so let's break it down:
 
 ```sh
 # Parse the files which *have* the match time column.
-for FILE in ${INPUT_DIR}{2020..2023}*.csv
+for FILE in ${INPUT_DIR}{2019..2023}*.csv
 do
   sed '1d' $FILE | \
-    awk -v f=$(basename $FILE | sed 's/.csv//') \
-      'BEGIN{FS=","; OFS="\t"}{print f,$2,$3,$4,$5,$6,$7}' \
+    awk -v season=$(basename $FILE | sed 's/.csv//') \
+      'BEGIN{FS=","; OFS="\t"}{print season,$2,$3,$4,$5,$6,$7}' \
          >>seasons_2020_2024.tsv
 done
 ```
 
-The logic is identical to that described for the previous _for_ loop except for this time we are only inserting the _awk_  _f_ variable value for one column to record the season. The match start time is in the third column ($3) of each input file.
+The logic is identical to that described for the previous _for_ loop except for this time we are only inserting the _awk_  _season_ variable value for one column to record the season. The match start time is in the third column ($3) of each input file.
 
 ### Create the final file with the column names row
 
