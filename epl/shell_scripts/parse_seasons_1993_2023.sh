@@ -13,8 +13,8 @@ fi
 for FILE in ${INPUT_DIR}{1993..2018}*.csv
 do
   sed '1d' $FILE | \
-    awk -v f=$(basename $FILE | sed 's/.csv//') -v null='NA' \
-      'BEGIN{FS=","; OFS="\t"}{print f,$2,null,$3,$4,$5,$6}' \
+    awk -v season=$(basename $FILE | sed 's/.csv//') -v null='NA' \
+      'BEGIN{FS=","; OFS="\t"}{print season,$2,null,$3,$4,$5,$6}' \
          >>seasons_1993_2019.tsv
 done
 
@@ -22,8 +22,8 @@ done
 for FILE in ${INPUT_DIR}{2019..2023}*.csv
 do
   sed '1d' $FILE | \
-    awk -v f=$(basename $FILE | sed 's/.csv//') \
-      'BEGIN{FS=","; OFS="\t"}{print f,$2,$3,$4,$5,$6,$7}' \
+    awk -v season=$(basename $FILE | sed 's/.csv//') \
+      'BEGIN{FS=","; OFS="\t"}{print season,$2,$3,$4,$5,$6,$7}' \
          >>seasons_2020_2024.tsv
 done
 
