@@ -69,7 +69,9 @@ USE staging;
 We are now going to create a table in the staging schema for the entire contents of the file _seasons_1993_2023.tsv_ by executing the following command:
 
 ```sql
-CREATE TABLE seasons_1993_2023_raw AS SELECT * FROM  '../output_data/seasons_1993_2023.tsv';
+CREATE TABLE seasons_1993_2023_raw AS 
+SELECT * 
+FROM  '../output_data/seasons_1993_2023.tsv';
 ```
 
 Like many command commandline tools, when you execute a command, "no news is good news!". If all went well, you simply get back an empty prompt. That wasn't very difficult, in fact, DuckDB makes this kind of task trivial. We were able to create a table by simply selecting everything ( _SELECT * _) from an external text file. DuckDB does allow more fine-grained control over data imports using functions such as _read_csv_ that take options which we can explicitly set and we will cover such functions and their options in later chapters. We can verify that the table has loaded by doing a data row count as follows:
@@ -94,7 +96,7 @@ DESCRIBE seasons_1993_2023_raw;
 
 ![Chapter 3 - figure 2](images/ch03_fig2.png)
 
-The column names we added in our processing shell script were correctly used by DuckDB as table column names. The column types are more interesting; it has assigned type _VARCHAR_ to six of the seven columns. DuckDB's _VARCHAR_ type behaves like the _TEXT_ type in PostgreSQL which is convenient because it does not requires a length value as it does in many other database software where you need type declarations like _VARCHAR(50)_. It is also a general data type that can represent date values or numbers as text that can be converted to more appropriate types as needed. For example, we have a date column but DuckDB has interpreted the date strings as _VARCHAR_ and has not tried to be "clever" like Excel and dow automatic type conversions! To understand why it infers away_club_goals as type _BIGINT_ but _home_club_goals_ as _VARCHAR_ will require us to dig deeper into the table which we will do in the next chapter.
+The column names we added in our processing shell script were correctly used by DuckDB as table column names. The column types are more interesting; it has assigned type _VARCHAR_ to five of the seven columns. DuckDB's _VARCHAR_ type behaves like the _TEXT_ type in PostgreSQL which is convenient because it does not requires a length value as it does in many other database software where you need type declarations like _VARCHAR(50)_. It is also a general data type that can represent date values or numbers as text that can be converted to more appropriate types as needed. For example, we have a date column but DuckDB has interpreted the date strings as _VARCHAR_ and has not tried to be "clever" like Excel and do automatic type conversions! It has inferred a type of _BIGINT_ for the columns _home_club_goals_ and _away_club_goals_. DuckDB has many numeric types and it has correctly inferred an integer type for these columns; it has "played safe" by assigning the biggest integer type but common sense tells us no football score is ever going to need such large integers as this type allows. We will cast these columns to a more suitable integer type in the next chapter. I is always worth checking carefully what types DuckDB has inferred because if you expect a numeric type for a column and it assings a character type, then it may indicate mixed data types in the column or that the columns are not aligned correctly.
 
 ## Main points
 
