@@ -10,7 +10,7 @@ if [[ -f ${OUTPUT_DIR}seasons_1993_2023.tsv ]]; then
 fi
 
 # Parse the files which *do not have* the match time column.
-for FILE in ${INPUT_DIR}{1993..2019}*.csv
+for FILE in ${INPUT_DIR}{1993..2018}*.csv
 do
   sed '1d' $FILE | \
     awk -v f=$(basename $FILE | sed 's/.csv//') -v null='NA' \
@@ -19,7 +19,7 @@ do
 done
 
 # Parse the files which *have* the match time column.
-for FILE in ${INPUT_DIR}{2020..2023}*.csv
+for FILE in ${INPUT_DIR}{2019..2023}*.csv
 do
   sed '1d' $FILE | \
     awk -v f=$(basename $FILE | sed 's/.csv//') \
