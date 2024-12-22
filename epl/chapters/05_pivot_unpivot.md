@@ -113,7 +113,7 @@ FROM season_1992_1993_scores;
 ### Create the club name to club code lookup
 
 ```sql
-CREATE OR REPLACE TABLE club_name_code_lu AS
+CREATE OR REPLACE TABLE club_name_code_season_1992_1993_lu AS
 SELECT 
   "Home \ Away" club_name,
   away_club_code club_code
@@ -131,7 +131,7 @@ SELECT
   scores.home_club_score,
   scores.away_club_score
 FROM season_1992_1993_int_scores scores
-  INNER JOIN club_name_code_lu lu
+  INNER JOIN club_name_code_season_1992_1993_lu lu
     ON scores.home_club_name = lu.club_name;
 ```
 
