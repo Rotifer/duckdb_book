@@ -55,11 +55,13 @@ CREATE TABLE matches(
 
 - We need the rows for _matches_ from both the 1992-1993 season and all the other seasons in one table or view that we can append to the _matches_ table created above.
 
-CREATE TABLE staging.epl_matches_1992_2024 AS
+```sql
+CREATE OR REPLACE TABLE staging.epl_matches_1992_2024 AS
 WITH matches_temp AS(
   SELECT
     '1992_1993' season,
     NULL match_date,
+    NULL match_date_orig,
     NULL match_time,
     home_club_code,
     away_club_code,
@@ -70,6 +72,7 @@ WITH matches_temp AS(
   SELECT
     season,
     STRPTIME(match_date, '%d/%m/%Y') match_date,
+    match_date match_date_orig,
     CASE
       WHEN match_time = 'NA' THEN NULL
       ELSE CAST(match_time AS TIME)
@@ -84,5 +87,20 @@ WITH matches_temp AS(
   WHERE home_club_name IS NOT NULL
 )
 SELECT
-  ROW_NUMBER() OVER() match_id, *
-FROM  matches_temp;
+  *
+FROM  matches_temp
+ORDER BY season, match_date, match_time, home_club_code;
+```
+
+
+```sql
+COPY epl_matches_1992_2024 TO '../output_data/epl_matches_1992_2024.csv' (FORMAT 'csv', DELIMITER ',', HEADER true);
+```
+
+### Fix the date fields
+
+```sql
+SELECT match_date FROM seasons_1993_2023_raw WHERE REGEXP_MATCHES(match_date, '\d{2}\/\d{2}\/\d{2}$');
+```
+
+
