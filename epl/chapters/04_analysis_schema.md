@@ -114,3 +114,52 @@ select strptime('14/05/01', '%d/%m/%Y');
 select strptime('14/05/00', '%d/%m/%y');
 ```
 
+## Create the final table
+
+```sql
+CREATE SEQUENCE seq_match_id START 1;
+CREATE OR REPLACE TABLE main.matches(
+  mid INTEGER PRIMARY KEY DEFAULT NEXTVAL('seq_match_id'),
+  season TEXT NOT NULL,
+  mdate DATE,
+  mtime TIME,
+  hcc TEXT NOT NULL,
+  acc TEXT NOT NULL,
+  hcg TINYINT NOT NULL,
+  acg TINYINT NOT NULL
+);
+```
+
+### Move the data from the temp table
+
+```sql
+INSERT INTO matches(season,
+                    mdate,
+                    mtime,
+                    hcc,
+                    acc,
+                    hcg,
+                    acg)
+SELECT
+  season,
+  match_date,
+  match_time,
+  home_club_code,
+  away_club_code,
+  home_club_score,
+  away_club_score
+FROM staging.epl_matches_1992_2024
+ORDER BY season, match_date, match_time, home_club_code;
+```
+
+- Create the table in schema main 
+- Add a match id column using a sequence
+- Insert the data from the staging table in a defined order
+- Export the final table t0 an output file
+
+```sql
+COPY matches TO '../output_data/matches.csv' (FORMAT 'csv', DELIMITER ',', HEADER true);
+```
+
+
+## Create the league tables
