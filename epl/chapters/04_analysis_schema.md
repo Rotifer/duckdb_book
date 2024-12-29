@@ -71,7 +71,12 @@ WITH matches_temp AS(
   UNION
   SELECT
     season,
-    STRPTIME(match_date, '%d/%m/%Y') match_date,
+    CASE
+      WHEN REGEXP_MATCHES(match_date, '\d{2}\/\d{2}\/\d{2}$') THEN
+        STRPTIME(match_date, '%d/%m/%y') 
+      WHEN REGEXP_MATCHES(match_date, '\d{2}\/\d{2}\/\d{4}$') THEN
+        STRPTIME(match_date, '%d/%m/%Y')
+    END match_date,
     match_date match_date_orig,
     CASE
       WHEN match_time = 'NA' THEN NULL
