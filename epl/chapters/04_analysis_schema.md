@@ -169,7 +169,6 @@ COPY matches TO '../output_data/matches.csv' (FORMAT 'csv', DELIMITER ',', HEADE
 ```sql
 CREATE OR REPLACE TABLE ltables(
   season VARCHAR,
-  fpos TINYINT,
   ccode VARCHAR,
   played TINYINT,
   won TINYINT,
@@ -249,12 +248,9 @@ season_summary AS(
     SUM(points) points
   FROM mresults
   GROUP BY season, ccode
-  ORDER BY CAST(SUBSTR(season, 1, 4) AS INT) DESC, 
-    points DESC, goal_diff DESC, scored DESC
 )
 INSERT INTO ltables(
   season,
-  fpos,
   ccode,
   played,
   won,
@@ -267,7 +263,6 @@ INSERT INTO ltables(
 )
 SELECT
   season,
-  ROW_NUMBER() OVER(PARTITION BY season) fpos,
   ccode,
   played,
   won,
