@@ -249,7 +249,8 @@ season_summary AS(
     SUM(points) points
   FROM mresults
   GROUP BY season, ccode
-  ORDER BY season DESC, points DESC, goal_diff DESC, scored DESC
+  ORDER BY CAST(SUBSTR(season, 1, 4) AS INT) DESC, 
+    points DESC, goal_diff DESC, scored DESC
 )
 INSERT INTO ltables(
   season,
