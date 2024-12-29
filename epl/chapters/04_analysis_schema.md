@@ -61,7 +61,6 @@ WITH matches_temp AS(
   SELECT
     '1992_1993' season,
     NULL match_date,
-    NULL match_date_orig,
     NULL match_time,
     home_club_code,
     away_club_code,
@@ -77,7 +76,6 @@ WITH matches_temp AS(
       WHEN REGEXP_MATCHES(match_date, '\d{2}\/\d{2}\/\d{4}$') THEN
         STRPTIME(match_date, '%d/%m/%Y')
     END match_date,
-    match_date match_date_orig,
     CASE
       WHEN match_time = 'NA' THEN NULL
       ELSE CAST(match_time AS TIME)
@@ -93,8 +91,7 @@ WITH matches_temp AS(
 )
 SELECT
   *
-FROM  matches_temp
-ORDER BY season, match_date, match_time, home_club_code;
+FROM  matches_temp;
 ```
 
 
@@ -108,4 +105,12 @@ COPY epl_matches_1992_2024 TO '../output_data/epl_matches_1992_2024.csv' (FORMAT
 SELECT match_date FROM seasons_1993_2023_raw WHERE REGEXP_MATCHES(match_date, '\d{2}\/\d{2}\/\d{2}$');
 ```
 
+
+### date issue
+
+```sql
+select strptime('14/05/00', '%d/%m/%Y');
+select strptime('14/05/01', '%d/%m/%Y');
+select strptime('14/05/00', '%d/%m/%y');
+```
 
