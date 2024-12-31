@@ -27,3 +27,7 @@ How many clubs were represented in the first season 1992_1993 and also in season
 
 
 Which clubs have been represented in each of the 31 seasons?
+
+```
+=QUERY(UNIQUE(HSTACK(matches!B2:B12407, matches!E2:E12407)), "SELECT Col2, COUNT(Col1) GROUP BY Col2 ORDER BY COUNT(Col1) DESC")
+```
