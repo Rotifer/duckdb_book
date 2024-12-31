@@ -20,8 +20,10 @@ How many clubs make up the EPL for each season?
         QUERY(matches, "SELECT B, E")
         ), 
    "SELECT Col1, COUNT(Col2) GROUP BY Col1")`
-``````
+```
 
 How many clubs were represented in the first season 1992_1993 and also in season 2023_2024?
+
+
 
 Which clubs have been represented in each of the 31 seasons?
